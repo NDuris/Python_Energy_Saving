@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="da">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Energy Prices</title>
+</head>
+
+<body>
+    <h1>⚡ Energy Prices (sidste {{ days }} dage)</h1>
+    <form method="POST">
+        <label for="days">Hvor mange dage?</label>
+        <input type="number" name="days" id="days" min="1" max="30" value="{{ days }}">
+        <button type="submit">Vis data</button>
+    </form>
+
+    {% if data %}
+    <table border="1" cellpadding="4" cellspacing="0">
+        <tr>
+            <th>Dato</th>
+            <th>Time</th>
+            <th>Pris (DKK/MWh)</th>
+        </tr>
+        {% for row in data %}
+        <tr>
+            <td>{{ row.date }}</td>
+            <td>{{ row.hour }}</td>
+            <td>{{ row.spot_price_dkk }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>Ingen data fundet.</p>
+    {% endif %}
+</body>
+
+</html>
