@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Analytics</h2>
+
+<form method="POST">
+    <label for="start_date">Start dato:</label>
+    <input type="date" name="start_date" id="start_date" value="{{ start }}">
+    <label for="end_date">Slut dato:</label>
+    <input type="date" name="end_date" id="end_date" value="{{ end }}">
+    <button type="submit">Opdater</button>
+    <button type="submit" name="download_csv">Download CSV</button>
+</form>
+
+{% if data %}
+<div id="chart"></div>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script>
+    // Generer arrays som strings og parse til JS
+    var x_data = {{ data | map(attribute = 'Date') | list | tojson }};
+    var hour_data = {{ data | map(attribute = 'Hour') | list | tojson }};
+    var y_data = {{ data | map(attribute = 'SpotPriceDKK') | list | tojson }};
+
+    // Kombiner dato + time
+    var x_combined = x_data.map(function (d, i) {
+        return d + ' ' + hour_data[i];
+    });
+
+    var trace = {
+        x: x_combined,
+        y: y_data,
+        type: 'scatter',
+        mode: 'lines+markers',
+        name: 'SpotPriceDKK'
+    };
+
+    var layout = {
+        title: 'SpotPriceDKK over tid',
+        xaxis: { title: 'Datetime' },
+        yaxis: { title: 'DKK/MWh' }
+    };
+
+    Plotly.newPlot('chart', [trace], layout);
+</script>
+{% endif %}
+
+{% endblock %}

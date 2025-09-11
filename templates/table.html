@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Energy Data</h2>
+
+<form method="POST">
+    <label>Start dato:</label>
+    <input type="date" name="start_date" value="{{ start }}">
+    <label>Slut dato:</label>
+    <input type="date" name="end_date" value="{{ end }}">
+    <button type="submit">Opdater</button>
+</form>
+
+<table border="1" cellpadding="4" cellspacing="0">
+    <tr>
+        <th>Date</th>
+        <th>Hour</th>
+        <th>SpotPriceDKK</th>
+    </tr>
+    {% for row in data %}
+    <tr>
+        <td>{{ row.Date }}</td>
+        <td>{{ row.Hour }}</td>
+        <td>{{ row.SpotPriceDKK }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

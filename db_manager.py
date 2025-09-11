@@ -27,3 +27,5 @@ def insert_data(records: List[EnergyRecord]):
             VALUES (:HourUTC, :Date, :Hour, :SpotPriceDKK)
         """, rows)
         conn.commit()
+        print(f"Faktisk tilføjede rækker: {c.rowcount}")
+

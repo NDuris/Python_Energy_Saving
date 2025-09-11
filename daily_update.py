@@ -1,27 +1,17 @@
-# daily_update.py
-from datetime import datetime, timedelta, timezone
-from db_manager import init_db, get_latest_hourutc, insert_data
+from datetime import datetime, timedelta
+from db_manager import insert_data
 from data_fetcher import fetch_energy_prices
 from data_cleaner import clean_energy_data
 
 if __name__ == "__main__":
-    init_db()
-    last = get_latest_hourutc()
-    if last:
-        # Parse last fra DB (husk Z-case)
-        if last.endswith("Z"):
-            last_iso = last.replace("Z", "+00:00")
-        else:
-            last_iso = last
-        start = datetime.fromisoformat(last_iso).astimezone(timezone.utc) + timedelta(hours=1)
-    else:
-        # fallback: hent sidste døgn hvis DB er tom
-        start = datetime.now(timezone.utc) - timedelta(days=1)
+    end = datetime.utcnow().date()
+    start = end - timedelta(days=1)
 
-    end = datetime.now(timezone.utc)
+    start_str = start.strftime("%Y-%m-%d")
+    end_str = end.strftime("%Y-%m-%d")
 
-    print(f"Henter data fra {start.isoformat()} til {end.isoformat()} ...")
-    raw = fetch_energy_prices(start=start.isoformat(), end=end.isoformat())
+    print(f"Henter data fra {start_str} til {end_str} ...")
+    raw = fetch_energy_prices(area="DK1", start=start_str, end=end_str)
     cleaned = clean_energy_data(raw)
     insert_data(cleaned)
-    print(f"Tilføjede {len(cleaned)} nye rækker ✅")
+    print(f"Indsat {len(cleaned)} nye rækker i databasen ✅")
