@@ -14,4 +14,4 @@ if __name__ == "__main__":
     raw = fetch_energy_prices(area="DK1", start=start_str, end=end_str)
     cleaned = clean_energy_data(raw)
     insert_data(cleaned)
-    print(f"Indsat {len(cleaned)} nye rækker i databasen ✅")
+    print(f"Indsat {len(cleaned)} nye rækker i databasen.")

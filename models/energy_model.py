@@ -8,7 +8,7 @@ class EnergyRecord:
 
     def to_dict(self):
         return {
-            "HourUTC": self.hour_utc,
+            "HourUTC": self.hour_utc, #unik nøgle
             "Date": self.date,
             "Hour": self.hour,
             "SpotPriceDKK": self.price

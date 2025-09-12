@@ -7,9 +7,9 @@ if __name__ == "__main__":
     init_db()
 
     end = datetime.utcnow().date()
-    start = end - timedelta(days=365)  # 1 års data
+    start = end - timedelta(days=365)
 
-    chunk_days = 30  # henter 1 måned ad gangen
+    chunk_days = 30
     current = start
     total_inserted = 0
 
@@ -24,7 +24,7 @@ if __name__ == "__main__":
         cleaned = clean_energy_data(raw)
         insert_data(cleaned)
         total_inserted += len(cleaned)
-        print(f"Indsat {len(cleaned)} rækker ✅")
+        print(f"Indsat {len(cleaned)} rækker") # i tilfælde der er nye rækker som ikke overlapper med eksisterende
 
         current = chunk_end + timedelta(days=1)
 

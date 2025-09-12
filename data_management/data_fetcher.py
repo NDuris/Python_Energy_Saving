@@ -4,7 +4,7 @@ from typing import Optional
 API_URL = "https://api.energidataservice.dk/dataset/Elspotprices"
 
 def fetch_energy_prices(area="DK1", start: Optional[str] = None, end: Optional[str] = None):
-    """Hent rårækker fra API. start/end er 'YYYY-MM-DD' strings."""
+    """Hent rådata fra API. start/end er 'YYYY-MM-DD' strings."""
     params = {
         "limit": 5000,
         "sort": "HourUTC asc",

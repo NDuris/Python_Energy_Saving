@@ -4,7 +4,7 @@
 
 <h2>Analytics</h2>
 
-<!-- Farvede kort med nøglemetrics -->
+<!-- Kort med nøglemetrics -->
 <div class="d-flex gap-3 mb-4">
     <div class="card text-white bg-primary p-3" style="width: 150px;">
         <h5>Gennemsnit</h5>
@@ -39,7 +39,7 @@
     </ul>
 </form>
 
-<!-- Filter og graf type -->
+<!-- Filter og graf -->
 <form method="get" id="filter_form" class="mb-4">
     <input type="hidden" name="tab" value="{{ tab }}">
     <label>Start dato:</label>
@@ -75,18 +75,13 @@
     const data_raw = {{ data| tojson }};
     let traces = [];
 
-    // Funktion til sparkline mini-graf
+    // mini-graf
     function plotSpark(id, values, color) {
         if (!values) return;
         Plotly.newPlot(id, [{ y: values, type: 'scatter', mode: 'lines', line: { color: color } }], { margin: { t: 0, b: 0, l: 0, r: 0 }, height: 50 });
     }
 
-    // Mini-grafer i kortene
-    plotSpark('spark_avg', {{ metrics.prices if metrics else [] }}, 'white');
-    plotSpark('spark_max', {{ metrics.prices if metrics else [] }}, 'white');
-    plotSpark('spark_min', {{ metrics.prices if metrics else [] }}, 'white');
-
-    // Hoved Plotly-graf (bevarer alt eksisterende functionality)
+    // Hoved Plotly-graf
     if (tab === "overview") {
         const x = data_raw.map(d => d.Date + " " + d.Hour);
         const y = chart_type === "moving_avg" ? data_raw.map(d => d.MA7) : data_raw.map(d => d.SpotPriceDKK);
