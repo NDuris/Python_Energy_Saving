@@ -1,47 +1,130 @@
 {% extends "base.html" %}
-
 {% block content %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
 <h2>Analytics</h2>
 
-<form method="POST">
-    <label for="start_date">Start dato:</label>
-    <input type="date" name="start_date" id="start_date" value="{{ start }}">
-    <label for="end_date">Slut dato:</label>
-    <input type="date" name="end_date" id="end_date" value="{{ end }}">
-    <button type="submit">Opdater</button>
-    <button type="submit" name="download_csv">Download CSV</button>
+<!-- Farvede kort med nøglemetrics -->
+<div class="d-flex gap-3 mb-4">
+    <div class="card text-white bg-primary p-3" style="width: 150px;">
+        <h5>Gennemsnit</h5>
+        <h3>{{ metrics.average if metrics else '-' }}</h3>
+        <div id="spark_avg"></div>
+    </div>
+    <div class="card text-white bg-success p-3" style="width: 150px;">
+        <h5>Højeste</h5>
+        <h3>{{ metrics.max if metrics else '-' }}</h3>
+        <div id="spark_max"></div>
+    </div>
+    <div class="card text-white bg-danger p-3" style="width: 150px;">
+        <h5>Laveste</h5>
+        <h3>{{ metrics.min if metrics else '-' }}</h3>
+        <div id="spark_min"></div>
+    </div>
+</div>
+
+<!-- Tabs -->
+<form method="get" id="tab_form" class="mb-3">
+    <input type="hidden" name="chart_type" value="{{ chart_type }}">
+    <input type="hidden" name="start_date" value="{{ start }}">
+    <input type="hidden" name="end_date" value="{{ end }}">
+    <ul class="nav nav-tabs">
+        {% for t, label in [('overview', 'Overview'), ('daily', 'Daily Patterns'), ('weekday', 'Weekday Comparison'),
+        ('hour_weekday', 'Hour vs Weekday')] %}
+        <li class="nav-item">
+            <button type="submit" name="tab" value="{{ t }}" class="nav-link {% if tab==t %}active{% endif %}"
+                style="border:none;background:none;">{{ label }}</button>
+        </li>
+        {% endfor %}
+    </ul>
 </form>
 
-{% if data %}
+<!-- Filter og graf type -->
+<form method="get" id="filter_form" class="mb-4">
+    <input type="hidden" name="tab" value="{{ tab }}">
+    <label>Start dato:</label>
+    <input type="date" name="start_date" value="{{ start }}">
+    <label>Slut dato:</label>
+    <input type="date" name="end_date" value="{{ end }}">
+    <label for="chart_type">Vælg graf/model:</label>
+    <select name="chart_type" id="chart_type">
+        {% if tab == 'overview' %}
+        <option value="line" {% if chart_type=='line' %}selected{% endif %}>Line chart</option>
+        <option value="moving_avg" {% if chart_type=='moving_avg' %}selected{% endif %}>7-dages glidende gennemsnit
+        </option>
+        {% elif tab == 'daily' %}
+        <option value="bar" {% if chart_type=='bar' %}selected{% endif %}>Bar chart</option>
+        <option value="box" {% if chart_type=='box' %}selected{% endif %}>Box plot</option>
+        {% elif tab == 'weekday' %}
+        <option value="bar" {% if chart_type=='bar' %}selected{% endif %}>Bar chart</option>
+        <option value="violin" {% if chart_type=='violin' %}selected{% endif %}>Violin plot</option>
+        {% elif tab == 'hour_weekday' %}
+        <option value="line" {% if chart_type=='line' %}selected{% endif %}>Line chart</option>
+        <option value="heatmap" {% if chart_type=='heatmap' %}selected{% endif %}>Heatmap</option>
+        {% endif %}
+    </select>
+    <button type="submit" class="btn btn-primary btn-sm">Opdater</button>
+</form>
+
+<!-- Hovedgraf -->
 <div id="chart"></div>
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script>
-    // Generer arrays som strings og parse til JS
-    var x_data = {{ data | map(attribute = 'Date') | list | tojson }};
-    var hour_data = {{ data | map(attribute = 'Hour') | list | tojson }};
-    var y_data = {{ data | map(attribute = 'SpotPriceDKK') | list | tojson }};
+    const tab = "{{ tab }}";
+    const chart_type = "{{ chart_type }}";
+    const data_raw = {{ data| tojson }};
+    let traces = [];
 
-    // Kombiner dato + time
-    var x_combined = x_data.map(function (d, i) {
-        return d + ' ' + hour_data[i];
-    });
+    // Funktion til sparkline mini-graf
+    function plotSpark(id, values, color) {
+        if (!values) return;
+        Plotly.newPlot(id, [{ y: values, type: 'scatter', mode: 'lines', line: { color: color } }], { margin: { t: 0, b: 0, l: 0, r: 0 }, height: 50 });
+    }
 
-    var trace = {
-        x: x_combined,
-        y: y_data,
-        type: 'scatter',
-        mode: 'lines+markers',
-        name: 'SpotPriceDKK'
-    };
+    // Mini-grafer i kortene
+    plotSpark('spark_avg', {{ metrics.prices if metrics else [] }}, 'white');
+    plotSpark('spark_max', {{ metrics.prices if metrics else [] }}, 'white');
+    plotSpark('spark_min', {{ metrics.prices if metrics else [] }}, 'white');
 
-    var layout = {
-        title: 'SpotPriceDKK over tid',
-        xaxis: { title: 'Datetime' },
-        yaxis: { title: 'DKK/MWh' }
-    };
+    // Hoved Plotly-graf (bevarer alt eksisterende functionality)
+    if (tab === "overview") {
+        const x = data_raw.map(d => d.Date + " " + d.Hour);
+        const y = chart_type === "moving_avg" ? data_raw.map(d => d.MA7) : data_raw.map(d => d.SpotPriceDKK);
+        traces.push({ x: x, y: y, type: 'scatter', mode: 'lines+markers' });
+    } else if (tab === "daily") {
+        const x = data_raw.map(d => d.Hour);
+        if (chart_type === "bar") traces.push({ x: x, y: data_raw.map(d => d.AvgPrice), type: 'bar' });
+        if (chart_type === "box") traces.push({ y: data_raw.map(d => d.AvgPrice), type: 'box' });
+    } else if (tab === "weekday") {
+        const weekdays = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag', 'Søndag'];
+        const x = data_raw.map(d => weekdays[d.Weekday]);
+        if (chart_type === "bar") traces.push({ x: x, y: data_raw.map(d => d.AvgPrice), type: 'bar' });
+        if (chart_type === "violin") traces.push({ y: data_raw.map(d => d.AvgPrice), type: 'violin' });
+    } else if (tab === "hour_weekday") {
+        const weekdays = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag', 'Søndag'];
+        if (chart_type === "line") {
+            const data_by_wd = {};
+            for (const r of data_raw) { if (!data_by_wd[r.Weekday]) data_by_wd[r.Weekday] = []; data_by_wd[r.Weekday][r.Hour] = r.AvgPrice; }
+            for (let wd = 0; wd < 7; wd++) {
+                const y = [];
+                for (let h = 0; h < 24; h++) y.push(data_by_wd[wd][h] || 0);
+                traces.push({ x: Array.from({ length: 24 }, (_, i) => i), y: y, name: weekdays[wd], type: 'scatter', mode: 'lines+markers' });
+            }
+        }
+        if (chart_type === "heatmap") {
+            const z = [];
+            for (let wd = 0; wd < 7; wd++) {
+                const row = [];
+                for (let h = 0; h < 24; h++) {
+                    const r = data_raw.find(d => d.Weekday == wd && d.Hour == h);
+                    row.push(r ? r.AvgPrice : 0);
+                }
+                z.push(row);
+            }
+            traces.push({ z: z, x: Array.from({ length: 24 }, (_, i) => i), y: weekdays, type: 'heatmap' });
+        }
+    }
 
-    Plotly.newPlot('chart', [trace], layout);
+    Plotly.newPlot('chart', traces, { margin: { t: 30 }, xaxis: { title: tab.includes('hour') ? 'Time' : 'Dato' }, yaxis: { title: 'DKK/MWh' } });
 </script>
-{% endif %}
-
 {% endblock %}

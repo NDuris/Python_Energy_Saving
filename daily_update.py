@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from db_manager import insert_data
-from data_fetcher import fetch_energy_prices
-from data_cleaner import clean_energy_data
+from data_management.data_fetcher import fetch_energy_prices
+from data_management.data_cleaner import clean_energy_data
 
 if __name__ == "__main__":
     end = datetime.utcnow().date()

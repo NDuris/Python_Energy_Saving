@@ -1,27 +1,55 @@
 {% extends "base.html" %}
 {% block content %}
-<h2>Energy Data</h2>
+<div class="container">
+    <h2>Energy Data</h2>
 
-<form method="POST">
-    <label>Start dato:</label>
-    <input type="date" name="start_date" value="{{ start }}">
-    <label>Slut dato:</label>
-    <input type="date" name="end_date" value="{{ end }}">
-    <button type="submit">Opdater</button>
-</form>
+    <form method="POST" class="row g-3 mb-3">
+        <div class="col-md-3">
+            <label>Start dato:</label>
+            <input type="date" name="start_date" value="{{ start }}" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label>Slut dato:</label>
+            <input type="date" name="end_date" value="{{ end }}" class="form-control">
+        </div>
+        <div class="col-md-2 align-self-end">
+            <button type="submit" class="btn btn-primary">Opdater</button>
+        </div>
+    </form>
 
-<table border="1" cellpadding="4" cellspacing="0">
-    <tr>
-        <th>Date</th>
-        <th>Hour</th>
-        <th>SpotPriceDKK</th>
-    </tr>
-    {% for row in data %}
-    <tr>
-        <td>{{ row.Date }}</td>
-        <td>{{ row.Hour }}</td>
-        <td>{{ row.SpotPriceDKK }}</td>
-    </tr>
-    {% endfor %}
-</table>
+    <div class="card p-3">
+        <table id="energy_table" class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>Date</th>
+                    <th>Hour</th>
+                    <th>SpotPriceDKK</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                <tr>
+                    <td>{{ row.Date }}</td>
+                    <td>{{ row.Hour }}</td>
+                    <td>{{ row.SpotPriceDKK }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        $('#energy_table').DataTable({
+            "paging": true,
+            "pageLength": 10,
+            "lengthChange": true,
+            "ordering": true,
+            "order": [[0, "desc"]],
+            "info": true,
+            "autoWidth": false,
+        });
+    });
+</script>
 {% endblock %}
