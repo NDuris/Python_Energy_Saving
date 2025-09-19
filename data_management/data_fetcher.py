@@ -18,3 +18,5 @@ def fetch_energy_prices(area="DK1", start: Optional[str] = None, end: Optional[s
     resp = requests.get(API_URL, params=params, timeout=30)
     resp.raise_for_status()
     return resp.json().get("records", [])
+
+#https://api.energidataservice.dk/dataset/Elspotprices?limit=5000&sort=HourUTC%20asc&filter={"PriceArea":["DK1"]}&start=2025-01-01&end=2025-01-02
